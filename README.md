@@ -1,6 +1,6 @@
 # Sunny Land
 
-B站 m_Studio 的教程 [Unity教程 入门第一款游戏制作](https://space.bilibili.com/370283072/channel/detail?cid=85776
+B站 m_Studio 的教程 [Unity教程 入门第一款游戏制作](https://space.bilibili.com/370283072/channel/detail?cid=85776)
 
 - [ ] 01 安装软件&导入素材
 - [ ] 02 编辑素材& Tilemap
