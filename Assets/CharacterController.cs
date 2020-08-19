@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ public class CharacterController : MonoBehaviour
     const float k_GroundCheckRadius = 0.1f;
     const float k_CeilingCheckRadius = 0.4f; // 天花板检查，检查能否从下蹲状态站起来
     private Vector2 movement;
-    private bool jump = false;
+    private bool jumpPressed = false;
     private bool facingRight = true;
     private bool grounded;
 
@@ -33,6 +34,16 @@ public class CharacterController : MonoBehaviour
         movement.x = Input.GetAxisRaw("Horizontal");
         // movement.y = Input.GetAxisRaw("Vertical"); // y: look up/down
 
+        if (animator.GetBool("Jumping") && rb.velocity.y <= 0)
+        {
+            animator.SetBool("Jumping", false);
+            animator.SetBool("Falling", true);
+        }
+        if (animator.GetBool("Falling") && grounded)
+        {
+            animator.SetBool("Falling", false);
+        }
+
         // test Face direction
         if (!facingRight && movement.x > 0 || facingRight && movement.x < 0)
         {
@@ -42,7 +53,7 @@ public class CharacterController : MonoBehaviour
         // Jump
         if (grounded && Input.GetButtonDown("Jump"))
         {
-            jump = true;
+            jumpPressed = true;
         }
     }
 
@@ -63,14 +74,14 @@ public class CharacterController : MonoBehaviour
         // rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
         // rb.position += new Vector2(movement.x * moveSpeed * Time.fixedDeltaTime, 0);
         rb.velocity = new Vector2(movement.x * moveSpeed * Time.fixedDeltaTime, rb.velocity.y);
+        animator.SetFloat("Speed", Math.Abs(rb.velocity.x));
 
         // jump （可能有个小问题：连跳，在起跳后还是grounded，并按键）
-        if (jump)
+        if (jumpPressed)
         {
             // 修复在斜坡起跳获得更快的速度
-            rb.velocity = new Vector2(rb.velocity.x, 0);
-            rb.AddForce(new Vector2(0f, jumpForce));
-            jump = false;
+            jump();
+            jumpPressed = false;
         }
 
         if (getCherry)
@@ -79,6 +90,13 @@ public class CharacterController : MonoBehaviour
             m_CherryScore.text = m_CherryCount.ToString();
             getCherry = false;
         }
+    }
+
+    private void jump()
+    {
+        rb.velocity = new Vector2(rb.velocity.x, 0);
+        rb.AddForce(new Vector2(0f, jumpForce));
+        animator.SetBool("Jumping", true);
     }
 
     private void FlipFacingDirection()
@@ -98,6 +116,21 @@ public class CharacterController : MonoBehaviour
         {
             getCherry = true;
             Destroy(collision.gameObject);
+        }
+    }
+
+    // 碰到敌人，消灭或受伤
+    void OnCollisionEnter2D(Collision2D collisionInfo)
+    {
+        if (collisionInfo.gameObject.tag == "Enemy")
+        {
+            if (animator.GetBool("Falling"))
+            {
+                // 消灭敌人
+                Destroy(collisionInfo.gameObject);
+                // Jump
+                jump();
+            }
         }
     }
 }
