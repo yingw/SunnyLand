@@ -1,16 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterController : MonoBehaviour
 {
 
-    [SerializeField] public float moveSpeed = 40f;
+    [SerializeField] public float moveSpeed = 400f;
     [SerializeField] public float jumpForce = 600f;
-    [SerializeField] public Rigidbody2D rb;
-    [SerializeField] public Animator animator;
+    private Rigidbody2D rb;
+    private Animator animator;
     [SerializeField] public Transform m_GroundCheckPoint; // 用点检半径检测地面的方法有个问题：斜坡上半径过小有可能检测不到
     [SerializeField] public LayerMask m_GroundLayer;
+    [SerializeField] public Text m_CherryScore;
+    private int m_CherryCount = 0;
 
     const float k_GroundCheckRadius = 0.1f;
     const float k_CeilingCheckRadius = 0.4f; // 天花板检查，检查能否从下蹲状态站起来
@@ -19,6 +22,11 @@ public class CharacterController : MonoBehaviour
     private bool facingRight = true;
     private bool grounded;
 
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
     // Update is called once per frame
     void Update()
     {
@@ -51,10 +59,10 @@ public class CharacterController : MonoBehaviour
             }
         }
 
-        // move
+        // 移动
         // rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
         // rb.position += new Vector2(movement.x * moveSpeed * Time.fixedDeltaTime, 0);
-        rb.velocity = new Vector2(movement.x * moveSpeed * Time.fixedDeltaTime * 10, rb.velocity.y);
+        rb.velocity = new Vector2(movement.x * moveSpeed * Time.fixedDeltaTime, rb.velocity.y);
 
         // jump （可能有个小问题：连跳，在起跳后还是grounded，并按键）
         if (jump)
@@ -63,6 +71,13 @@ public class CharacterController : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, 0);
             rb.AddForce(new Vector2(0f, jumpForce));
             jump = false;
+        }
+
+        if (getCherry)
+        {
+            m_CherryCount++;
+            m_CherryScore.text = m_CherryCount.ToString();
+            getCherry = false;
         }
     }
 
@@ -73,5 +88,16 @@ public class CharacterController : MonoBehaviour
         transform.localScale = theScale;
 
         facingRight = !facingRight;
+    }
+
+    private bool getCherry = false;
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "Collection")
+        {
+            getCherry = true;
+            Destroy(collision.gameObject);
+        }
     }
 }
